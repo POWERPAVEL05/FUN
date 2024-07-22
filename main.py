@@ -1,7 +1,6 @@
 import curses
 import subprocess
 
-menuItems = ["Start","Options","Help","Quit"]
 stdscr = curses.initscr()
 
 #Colors
@@ -20,38 +19,43 @@ def menuSSID(selected_row,listItems,win,frame=False):
     try:
         for idx,item in enumerate(listItems):
             x= 0  +frameVar
-            y = 0 + idx + frameVar + 1
-            #if idx > 15: break
+            y = 0 + idx + frameVar
             if idx == selected_row:
                 setColor(1,str(item),y,x,win)
             else:
                 win.addstr(y,x,item)
     except:
-        pass #list to long -->  TODO: add error log?
+        pass
     
     win.refresh()
 
-#draw frame around border of window
-def winFrame(win):
-    height,width = win.getmaxyx()
+#draw frame around border of window TODO: finish
+def winFrame(win,y,x):
+    height,width = y,x
     for w in range(width-2):
-        win.addstr(0,w+1,"═")
-        win.addstr(height-1,w+1,"═")
+        win.addch(0,w+1,"═")
+        win.addch(height-1,w+1,"═")
     for h in range(height-2):
-        win.addstr(h+1,0,"║")
-        win.addstr(h+1,width-2,"║")
+        win.addch(h+1,0,"║")
+        win.addch(h+1,width-1,"║")
+    win.addch(0,0,"╔")
+    win.addch(0,width-1,"╗")
+    win.addch(height-1,0,"╚")
+    try:
+        win.addch(height-1,width-1,"╝")
+    except: pass
+    #scuffed fix, curses tries to move curses to next line, even when there is none --> error
 
+class timeToQuit(Exception):pass
+#for quitting application
 def keymanagerQuit(key):
     if key == ord("q"):
             #incase of failure in other systems
-            curses.curs_set(1)
-            curses.nocbreak()
-            stdscr.keypad(False)
-            curses.echo()
-            exit()#curses.endwin() does not work, my fault?
+        raise timeToQuit
     else:
         pass
 
+#moving up and down focused list
 def keymanagerList(key,current_row_idx,items): 
     if key == ord("k"):
         if current_row_idx == 0:
@@ -68,6 +72,7 @@ def keymanagerList(key,current_row_idx,items):
     else:
         return current_row_idx
 
+#for moving around tabs which are soon to come
 def keymanagerTab(key,current_col_idx,items):
     if key == ord("l"):
         if current_col_idx == 0:
@@ -93,24 +98,29 @@ def main(stdscr):
     #splash screen
     stdscr.addstr(0,0,"FUN - is fetching data")
     stdscr.refresh()
-    itemsN = getSSID(17)
-    win = curses.newwin(30,30,0,0)#height,width,y,x
-    win1 = curses.newwin(20,30,0,30)
-    win1.refresh()
+    itemsN = getSSID(18)
+
+    #init Windows
+    winyx = (20,30)
+    win = curses.newwin(20,30,0,0)#height,width,y,x
+    win1 = curses.newwin(20,50,0,30)
+    #win1.refresh()
     
     #loop
     while True: 
         #Draw order
-        #winFrame(win)
         win1.addstr(0,0,str(len(itemsN)))
-        win1.addstr(1,0,str(current_row_idx))
+        win1.addstr(1,0,str(itemsN))
         win1.refresh()
         
         menuSSID(current_row_idx,itemsN,win,True)
+        winFrame(win,winyx[0],winyx[1])
         key = win.getch()#in ASCII code  
         #win.addstr(20,0,str(current_row_idx))
+        
         #Keymanaging
         keymanagerQuit(key)
+        win.clear()
         win1.clear()
         current_row_idx = keymanagerList(key,current_row_idx,itemsN)
         current_col_idx = 0 #keymanagerTab(key,current_col_idx,itemsN)
@@ -124,6 +134,11 @@ def main(stdscr):
 def getSSID(breakpoint = None):
     ssid = subprocess.run(["nmcli","-f" ,"SSID","-c","no","-t","d","w"],text=True,capture_output=True)
     nameList = str(ssid.stdout).split("\n")
+    try:
+        for _ in nameList:
+            nameList.remove("")
+    except:
+        pass #no empty item
     if breakpoint == None:
         return nameList
     else:
@@ -135,12 +150,15 @@ def setColor(pairName,text,y,x,win=stdscr):
     win.addstr(y,x,text)
     win.attroff(curses.color_pair(pairName))  
 
+#TODO: finish
 def updateAll():
     pass
 
 if __name__ == "__main__":
-    curses.wrapper(main)
-
+    try:
+        curses.wrapper(main)
+    except timeToQuit:
+        exit()
 '''
 
         if key == ord("q"):
