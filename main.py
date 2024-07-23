@@ -29,7 +29,12 @@ def menuSSID(selected_row,listItems,win,frame=False):
     
     win.refresh()
 
-#draw frame around border of window TODO: finish
+def drawBar(win):
+    height, width = stdscr.getmaxyx()
+    for i in range(width-1):
+        win.addch(0,i,"█")
+    win.refresh()
+
 def winFrame(win,y,x):
     height,width = y,x
     for w in range(width-2):
@@ -98,21 +103,32 @@ def main(stdscr):
     #splash screen
     stdscr.addstr(0,0,"FUN - is fetching data")
     stdscr.refresh()
-    itemsN = getSSID(18)
+    height, width = stdscr.getmaxyx()
+    itemsN = getSSID(18,True)
 
     #init Windows
     winyx = (20,30)
     win = curses.newwin(20,30,0,0)#height,width,y,x
     win1 = curses.newwin(20,50,0,30)
+    winBar = curses.newwin(10,width-1,height-1,0)
     #win1.refresh()
     
     #loop
     while True: 
         #Draw order
-        win1.addstr(0,0,str(len(itemsN)))
-        win1.addstr(1,0,str(itemsN))
+        #winBar.addstr(0,0,"█testestsetset")
+        win1.addstr(1,1,str(len(itemsN)))
+        win1.addstr(2,1,str(current_row_idx))
+        win1.addstr(3,1,str(itemsN))
+        winFrame(win1,20,50)
         win1.refresh()
-        
+        #winBar.refresh()
+        try:
+            drawBar(winBar)
+        except:
+            height, width = stdscr.getmaxyx()
+            winBar = curses.newwin(10,width-1,height-1,0)
+            winBar.refresh()
         menuSSID(current_row_idx,itemsN,win,True)
         winFrame(win,winyx[0],winyx[1])
         key = win.getch()#in ASCII code  
@@ -131,7 +147,7 @@ def main(stdscr):
 #gibt Liste von SSID wieder und Laenge der Liste
 #beakpoint specifies amount
 #TODO: handle 'I'm unkwown' and same routers emitting multiple singnals 
-def getSSID(breakpoint = None):
+def getSSID(breakpoint = None,duplicateRemove=False):
     ssid = subprocess.run(["nmcli","-f" ,"SSID","-c","no","-t","d","w"],text=True,capture_output=True)
     nameList = str(ssid.stdout).split("\n")
     try:
@@ -139,6 +155,8 @@ def getSSID(breakpoint = None):
             nameList.remove("")
     except:
         pass #no empty item
+    if duplicateRemove:
+        nameList = list(set(nameList))#remove duplicates
     if breakpoint == None:
         return nameList
     else:
