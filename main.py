@@ -3,6 +3,9 @@ import subprocess
 
 stdscr = curses.initscr()
 
+#raise when quitting tui
+class timeToQuit(Exception):pass
+
 #Colors
 def initColors():
     curses.init_pair(1,curses.COLOR_BLACK,curses.COLOR_WHITE)
@@ -10,35 +13,36 @@ def initColors():
 #Takes list and displays vertical Menu, naviagate up and down through items, needs selected_row for cursor 
 #TODO: make more dynamic
 #TODO: account for multiple signals with same SSID
-def menuSSID(selected_row,selected_win,winId,listItems,win,frame=False):
-    #h, w = win.getmaxyx()
+def menuList(selected_row,selected_win,listItems,win,frame=False):
     #adds padding to window if frame is included
+    window = win[0]
+    winId = win[1]
     frameVar = 0
     if frame:
         frameVar = 1
     try:
         for idx,item in enumerate(listItems):
-            x= 0  +frameVar
+            x = 0  +frameVar
             y = 0 + idx + frameVar
             if idx == selected_row and selected_win == winId :
-                setColor(1,str(item),y,x,win)
+                setColor(1,str(item),y,x,window)
             else:
-                win.addstr(y,x,item)
+                window.addstr(y,x,item)
     except:
         pass
     
-    win.refresh()
+    window.refresh()
 
 #draw bar across window
 def drawBar(win):
-    height, width = stdscr.getmaxyx()
+    width = stdscr.getmaxyx()[1]
     for i in range(width-1):
         win.addch(0,i,"█")
     win.refresh()
 
 #draw Frame around window, y x defined due resizing issues
-def winFrame(win,y,x):
-    height,width = y,x
+def winFrame(win,height,width):
+    win = win[0]
     for w in range(width-2):
         win.addch(0,w+1,"═")
         win.addch(height-1,w+1,"═")
@@ -53,13 +57,9 @@ def winFrame(win,y,x):
     except: pass
     #scuffed fix, curses tries to move curses to next line, even when there is none --> error
 
-#raised when quitting tui
-class timeToQuit(Exception):pass
-
 #for quitting application
 def keymanagerQuit(key):
     if key == ord("q"):
-            #incase of failure in other systems
         raise timeToQuit
     else:
         pass
@@ -118,11 +118,9 @@ def main(stdscr):
 
     #init Windows
     winyx = (20,30)
-    win = curses.newwin(20,30,0,0)#height,width,y,x
-    win1 = curses.newwin(20,50,0,30)
-    win2 = curses.newwin(20,30,20,0)
-    #winBar = curses.newwin(2,width-1,height-1,0)
-    #win1.refresh()
+    win = (curses.newwin(20,30,0,0),0)#height,width,y,x 
+    win1 = (curses.newwin(20,50,0,30),90)
+    win2 = (curses.newwin(20,30,20,0),1)
 
     allWindows = [win,win2]
 
@@ -130,31 +128,20 @@ def main(stdscr):
     #loop
     while True: 
         #Draw order
-        win1.clear()
-        win1.addstr(1,1,str(len(itemsN)))
-        win1.addstr(2,1,str(current_row_idx))
-        win1.addstr(3,1,str(current_col_idx))
-        win1.addstr(4,1,str())
+        win1[0].clear()
+        win1[0].addstr(1,1,str(len(itemsN)))
+        win1[0].addstr(2,1,str(current_row_idx))
+        win1[0].addstr(3,1,str(current_col_idx))
+        win1[0].addstr(4,1,str())
         winFrame(win1,20,50)
-        win1.refresh()
+        win1[0].refresh()
         
-        #winBar.refresh()
-        '''
-        try:
-            drawBar(winBar)
-        except:
-            height, width = stdscr.getmaxyx()
-            winBar = curses.newwin(10,width-1,height-1,0)
-            winBar.refresh()
-        winBar.refresh()
-        '''
-        menuSSID(current_row_idx,current_col_idx,0,itemsN,win,True)
-        menuSSID(current_row_idx,current_col_idx,1,testItems,win2,True)
+        menuList(current_row_idx,current_col_idx,itemsN,win,True)
+        menuList(current_row_idx,current_col_idx,testItems,win2,True)
         winFrame(win,winyx[0],winyx[1])
         winFrame(win2,20,30)
-        win2.refresh()
-        key = win.getch()#in ASCII code  
-        #win.addstr(20,0,str(current_row_idx))
+        win2[0].refresh()
+        key = win[0].getch()#in ASCII code  
         
         #Keymanaging
         keymanagerQuit(key)
@@ -166,7 +153,7 @@ def main(stdscr):
 
 #gibt Liste von SSID wieder und Laenge der Liste
 #beakpoint specifies amount
-#TODO: handle 'I'm unkwown' and same routers emitting multiple singnals 
+#TODO: handle 'I'm unkwown'
 def getSSID(breakpoint = None,duplicateRemove=False)-> list:
     ssid = subprocess.run(["nmcli","-f" ,"SSID","-c","no","-t","d","w"],text=True,capture_output=True)
     nameList = str(ssid.stdout).split("\n")
@@ -199,6 +186,16 @@ if __name__ == "__main__":
         curses.wrapper(main)
     except timeToQuit:
         exit()
+'''
+try:
+   drawBar(winBar)
+except:
+   height, width = stdscr.getmaxyx()
+   winBar = curses.newwin(10,width-1,height-1,0)
+   winBar.refresh()
+   winBar.refresh()
+'''
+        
 '''
 
         if key == ord("q"):
