@@ -1,10 +1,9 @@
 import curses
 import subprocess
-
+from keymanagers import timeToQuit, keymanagerQuit, keymanagerList, keymanagerTab 
 stdscr = curses.initscr()
 
 #raise when quitting tui
-class timeToQuit(Exception):pass
 
 #Colors
 def initColors():
@@ -12,11 +11,10 @@ def initColors():
 
 #Takes list and displays vertical Menu, naviagate up and down through items, needs selected_row for cursor 
 #TODO: make more dynamic
-#TODO: account for multiple signals with same SSID
-def menuList(selected_row,selected_win,listItems,win,frame=False):
+def menuList(selected_row,selected_win,winNum,navigation,frame=False):
     #adds padding to window if frame is included
-    window = win[0]
-    winId = win[1]
+    window = navigation[winNum][0]
+    listItems = navigation[winNum][1]
     frameVar = 0
     if frame:
         frameVar = 1
@@ -24,7 +22,7 @@ def menuList(selected_row,selected_win,listItems,win,frame=False):
         for idx,item in enumerate(listItems):
             x = 0  +frameVar
             y = 0 + idx + frameVar
-            if idx == selected_row and selected_win == winId :
+            if idx == selected_row and selected_win == winNum :
                 setColor(1,str(item),y,x,window)
             else:
                 window.addstr(y,x,item)
@@ -32,6 +30,9 @@ def menuList(selected_row,selected_win,listItems,win,frame=False):
         pass
     
     window.refresh()
+
+def testBar(win):
+    print("hewwo")
 
 #draw bar across window
 def drawBar(win):
@@ -42,7 +43,6 @@ def drawBar(win):
 
 #draw Frame around window, y x defined due resizing issues
 def winFrame(win,height,width):
-    win = win[0]
     for w in range(width-2):
         win.addch(0,w+1,"═")
         win.addch(height-1,w+1,"═")
@@ -57,51 +57,18 @@ def winFrame(win,height,width):
     except: pass
     #scuffed fix, curses tries to move curses to next line, even when there is none --> error
 
-#for quitting application
-def keymanagerQuit(key):
-    if key == ord("q"):
-        raise timeToQuit
-    else:
-        pass
+#don't know if this works
+#is supposed to icut out some lines
+def makeWin(height,width,y,x,windowList):
+    id = str(windowList.len())
+    name = "win"+id
+    name = curses.newwin(height,width,y,x)
+    windowList.append(name)
 
-#moving up and down focused list
-def keymanagerList(key,current_col_idx,current_row_idx,navigation): 
-    items = (navigation[current_col_idx])[0]
-    if key == ord("k"):
-        if current_row_idx == 0:
-            return len(items)-1
-        else:
-            current_row_idx += -1
-            return current_row_idx
-    elif key == ord("j"):
-        if current_row_idx == len(items)-1:
-            return 0
-        else:
-            current_row_idx +=1
-            return current_row_idx
-    else:
-        return current_row_idx
-
-#for moving around tabs which are soon to come
-def keymanagerTab(key,current_col_idx,current_row_idx,navigation):
-    items = navigation
-    if key == ord("h"):
-        if current_col_idx == 0:
-            return (len(items)-1,0)
-        else:
-            current_col_idx += -1
-            return (current_col_idx,0)
-    elif key == ord("l"):
-        if current_col_idx == len(items)-1: #max
-            return (0,0)
-        else:
-            current_col_idx += 1
-            return (current_col_idx,0)
-    else:
-        return current_col_idx, current_row_idx
 
 #Everything is run from here:Initiating/Updating of windows, row and soon to come focus_idx etc.
 def main(stdscr):
+    #list for all functions, is important
     #Init segment
     testItems = ['1','2','3','4']
     initColors()
@@ -118,30 +85,27 @@ def main(stdscr):
 
     #init Windows
     winyx = (20,30)
-    win = (curses.newwin(20,30,0,0),0)#height,width,y,x 
-    win1 = (curses.newwin(20,50,0,30),90)
-    win2 = (curses.newwin(20,30,20,0),1)
-
-    allWindows = [win,win2]
-
-    navigation = [[itemsN],[testItems]]
+    win = curses.newwin(20,30,0,0)#height,width,y,x 
+    win1 = curses.newwin(20,50,0,30)
+    win2 = curses.newwin(20,30,20,0)
+    navigation = [(win,itemsN),(win2,testItems)]
     #loop
     while True: 
         #Draw order
-        win1[0].clear()
-        win1[0].addstr(1,1,str(len(itemsN)))
-        win1[0].addstr(2,1,str(current_row_idx))
-        win1[0].addstr(3,1,str(current_col_idx))
-        win1[0].addstr(4,1,str())
+        win1.clear()
+        win1.addstr(1,1,str(len(itemsN)))
+        win1.addstr(2,1,str(current_row_idx))
+        win1.addstr(3,1,str(current_col_idx))
+        win1.addstr(4,1,str())
         winFrame(win1,20,50)
-        win1[0].refresh()
+        win1.refresh()
         
-        menuList(current_row_idx,current_col_idx,itemsN,win,True)
-        menuList(current_row_idx,current_col_idx,testItems,win2,True)
+        menuList(current_row_idx,current_col_idx,0,navigation,True)
+        menuList(current_row_idx,current_col_idx,1,navigation,True)
         winFrame(win,winyx[0],winyx[1])
         winFrame(win2,20,30)
-        win2[0].refresh()
-        key = win[0].getch()#in ASCII code  
+        win2.refresh()
+        key = win.getch()#in ASCII code  
         
         #Keymanaging
         keymanagerQuit(key)
@@ -186,56 +150,5 @@ if __name__ == "__main__":
         curses.wrapper(main)
     except timeToQuit:
         exit()
-'''
-try:
-   drawBar(winBar)
-except:
-   height, width = stdscr.getmaxyx()
-   winBar = curses.newwin(10,width-1,height-1,0)
-   winBar.refresh()
-   winBar.refresh()
-'''
-        
-'''
-
-        if key == ord("q"):
-            #incase of failure in other systems
-            curses.curs_set(1)
-            curses.nocbreak()
-            stdscr.keypad(False)
-            curses.echo()
-            exit()#curses.endwin() does not work, my fault?
-        elif key == ord("k"):
-            if current_row_idx == 0:
-                current_row_idx = len(itemsN)-1
-            else:
-                current_row_idx += -1
-        elif key == ord("j"):
-            if current_row_idx == len(itemsN)-1:
-                current_row_idx = 0
-            else:
-                current_row_idx += 1
-'''
-'''
-def main(win):
-    win.nodelay(True)
-    key = ""
-    win.clear()
-    win.addstr("Detected key:")
-
-    prev =""
-    while True:
-        try:
-            key = win.getkey()
-            prev = str(prev)+str(key)
-            win.clear()
-            win.addstr("Detected key:")
-            win.addstr(str(prev))
-            if key == os.linesep:
-                break
-        except Exception:
-            # No input
-            pass
-
-curses.wrapper(main)
-'''
+    #finally:    would work but to error message
+    #    exit()
