@@ -5,6 +5,13 @@ def keymanagerQuit(key):
         raise timeToQuit
     else:
         pass
+def keymanagerSelect(key,current_col_idx,current_row,navigation):
+    items = (navigation[current_col_idx][1])
+    win = (navigation[current_col_idx][0])
+    if key == ord("\n"):
+        return str(items[current_row])
+    else:
+        return "Nothing selected"
 
 #moving up and down focused list
 def keymanagerList(key,current_col_idx,current_row_idx,navigation): 
@@ -23,7 +30,7 @@ def keymanagerList(key,current_col_idx,current_row_idx,navigation):
             return current_row_idx
     else:
         return current_row_idx
-
+#switch between focusable(in navigation) windows
 def keymanagerTab(key,current_col_idx,current_row_idx,navigation):
     tabs = navigation
     if key == ord("h"):

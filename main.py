@@ -1,9 +1,7 @@
 import curses
 import subprocess
-from keymanagers import timeToQuit, keymanagerQuit, keymanagerList, keymanagerTab 
+from keymanagers import timeToQuit, keymanagerQuit, keymanagerList, keymanagerTab, keymanagerSelect 
 stdscr = curses.initscr()
-
-#raise when quitting tui
 
 #Colors
 def initColors():
@@ -65,10 +63,10 @@ def makeWin(height,width,y,x,windowList):
     name = curses.newwin(height,width,y,x)
     windowList.append(name)
 
-
+def refreshWin(win):
+    win.refresh()
 #Everything is run from here:Initiating/Updating of windows, row and soon to come focus_idx etc.
 def main(stdscr):
-    #list for all functions, is important
     #Init segment
     testItems = ['1','2','3','4']
     initColors()
@@ -76,7 +74,7 @@ def main(stdscr):
     current_row_idx = 0 #row of window
     current_col_idx = 0 #Window
     key = 0
-    
+    command = "" 
     #splash screen
     stdscr.addstr(0,0,"FUN - is fetching data")
     stdscr.refresh()
@@ -88,10 +86,12 @@ def main(stdscr):
     win = curses.newwin(20,30,0,0)#height,width,y,x 
     win1 = curses.newwin(20,50,0,30)
     win2 = curses.newwin(20,30,20,0)
+    win3 = curses.newwin(3,20,20,30)
     navigation = [(win,itemsN),(win2,testItems)]
     #loop
     while True: 
         #Draw order
+        win3.clear()
         win1.clear()
         win1.addstr(1,1,str(len(itemsN)))
         win1.addstr(2,1,str(current_row_idx))
@@ -105,13 +105,15 @@ def main(stdscr):
         winFrame(win,winyx[0],winyx[1])
         winFrame(win2,20,30)
         win2.refresh()
-        key = win.getch()#in ASCII code  
         
+        win3.addstr(1,0,command)
+        #win3.refresh()
         #Keymanaging
+        key = win.getch()#in ASCII code  
         keymanagerQuit(key)
         current_row_idx = keymanagerList(key,current_col_idx,current_row_idx,navigation)
         current_col_idx,current_row_idx = keymanagerTab(key,current_col_idx,current_row_idx,navigation)
-        
+        command = keymanagerSelect(key,current_col_idx,current_row_idx,navigation)
         #Clear
         stdscr.clear()
 
