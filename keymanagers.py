@@ -1,4 +1,4 @@
-from netTools import connect
+from netTools import wifiOff,wifiOn,connect,getSSID
 class timeToQuit(Exception):pass
 #for quitting application
 def keymanagerQuit(key):
@@ -8,12 +8,11 @@ def keymanagerQuit(key):
         pass
 def keymanagerSelect(key,current_col_idx,current_row,navigation):
     items = (navigation[current_col_idx][1])
-    win = (navigation[current_col_idx][0])
+    #win = (navigation[current_col_idx][0])
     if key == ord("\n"):
-        connect(str(items[current_row]),"ambatukam")
         return str(items[current_row])
     else:
-        return "Nothing selected"
+        return False
 
 #moving up and down focused list
 def keymanagerList(key,current_col_idx,current_row_idx,navigation): 
@@ -50,3 +49,20 @@ def keymanagerTab(key,current_col_idx,current_row_idx,navigation):
     else:
         return current_col_idx, current_row_idx
 
+#Toggle wifi in app
+def keymanagerStatus(key,state):
+    if key == ord("t"):
+        if state:
+            wifiOff()
+            return False
+        else:
+            wifiOn()
+            return True
+    else:
+        return state
+
+def keymanagerRefresh(key,netList):
+    if key == ord("r"):
+        netList = getSSID(18,True)
+    else:
+        return netList
