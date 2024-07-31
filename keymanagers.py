@@ -1,3 +1,4 @@
+from netTools import connect
 class timeToQuit(Exception):pass
 #for quitting application
 def keymanagerQuit(key):
@@ -9,6 +10,7 @@ def keymanagerSelect(key,current_col_idx,current_row,navigation):
     items = (navigation[current_col_idx][1])
     win = (navigation[current_col_idx][0])
     if key == ord("\n"):
+        connect(str(items[current_row]),"ambatukam")
         return str(items[current_row])
     else:
         return "Nothing selected"

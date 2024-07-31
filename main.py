@@ -1,7 +1,8 @@
 import curses
-import subprocess
-from keymanagers import timeToQuit, keymanagerQuit, keymanagerList, keymanagerTab, keymanagerSelect 
+from keymanagers import timeToQuit, keymanagerQuit, keymanagerList, keymanagerTab, keymanagerSelect
+from netTools import getSSID
 stdscr = curses.initscr()
+#41,147
 
 #Colors
 def initColors():
@@ -29,9 +30,6 @@ def menuList(selected_row,selected_win,winNum,navigation,frame=False):
     
     window.refresh()
 
-def testBar(win):
-    print("hewwo")
-
 #draw bar across window
 def drawBar(win):
     width = stdscr.getmaxyx()[1]
@@ -53,6 +51,7 @@ def winFrame(win,height,width):
     try:
         win.addch(height-1,width-1,"╝")
     except: pass
+    win.addstr(0,2,"win")
     #scuffed fix, curses tries to move curses to next line, even when there is none --> error
 
 #don't know if this works
@@ -76,9 +75,9 @@ def main(stdscr):
     key = 0
     command = "" 
     #splash screen
+    height, width = stdscr.getmaxyx()
     stdscr.addstr(0,0,"FUN - is fetching data")
     stdscr.refresh()
-    height, width = stdscr.getmaxyx()
     itemsN = getSSID(18,True)
 
     #init Windows
@@ -86,7 +85,7 @@ def main(stdscr):
     win = curses.newwin(20,30,0,0)#height,width,y,x 
     win1 = curses.newwin(20,50,0,30)
     win2 = curses.newwin(20,30,20,0)
-    win3 = curses.newwin(3,20,20,30)
+    win3 = curses.newwin(3,40,20,30)
     navigation = [(win,itemsN),(win2,testItems)]
     #loop
     while True: 
@@ -96,7 +95,8 @@ def main(stdscr):
         win1.addstr(1,1,str(len(itemsN)))
         win1.addstr(2,1,str(current_row_idx))
         win1.addstr(3,1,str(current_col_idx))
-        win1.addstr(4,1,str())
+        info ="height,width:"+str((height,width))
+        win1.addstr(4,1,info)
         winFrame(win1,20,50)
         win1.refresh()
         
@@ -107,7 +107,7 @@ def main(stdscr):
         win2.refresh()
         
         win3.addstr(1,0,command)
-        #win3.refresh()
+        win3.refresh()
         #Keymanaging
         key = win.getch()#in ASCII code  
         keymanagerQuit(key)
@@ -116,24 +116,6 @@ def main(stdscr):
         command = keymanagerSelect(key,current_col_idx,current_row_idx,navigation)
         #Clear
         stdscr.clear()
-
-#gibt Liste von SSID wieder und Laenge der Liste
-#beakpoint specifies amount
-#TODO: handle 'I'm unkwown'
-def getSSID(breakpoint = None,duplicateRemove=False)-> list:
-    ssid = subprocess.run(["nmcli","-f" ,"SSID","-c","no","-t","d","w"],text=True,capture_output=True)
-    nameList = str(ssid.stdout).split("\n")
-    try:
-        for _ in nameList:
-            nameList.remove("")
-    except:
-        pass #no empty item
-    if duplicateRemove:
-        nameList = list(set(nameList))#remove duplicates
-    if breakpoint == None:
-        return nameList
-    else:
-        return nameList[:breakpoint]
 
 #sets color of Text
 def setColor(pairName,text,y,x,win=stdscr):
