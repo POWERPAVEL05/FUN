@@ -1,5 +1,5 @@
 import curses
-from keymanagers import timeToQuit, keymanagerQuit, keymanagerList, keymanagerTab, keymanagerSelect
+from keymanagers import timeToQuit,keymanagerQuit,keymanagerList,keymanagerTab,keymanagerSelect,keymanagerStatus,keymanagerRefresh
 from netTools import getSSID
 stdscr = curses.initscr()
 #41,147
@@ -73,47 +73,85 @@ def main(stdscr):
     current_row_idx = 0 #row of window
     current_col_idx = 0 #Window
     key = 0
-    command = "" 
+    command = ""
+    wifiState = True #TODO: set based on nmcli
+    interactiveMode = True
+    enterText = ""
+    saveCommand = ""
+    
     #splash screen
     height, width = stdscr.getmaxyx()
     stdscr.addstr(0,0,"FUN - is fetching data")
     stdscr.refresh()
-    itemsN = getSSID(18,True)
+    netList = getSSID(18,True)
 
     #init Windows
     winyx = (20,30)
     win = curses.newwin(20,30,0,0)#height,width,y,x 
-    win1 = curses.newwin(20,50,0,30)
-    win2 = curses.newwin(20,30,20,0)
-    win3 = curses.newwin(3,40,20,30)
-    navigation = [(win,itemsN),(win2,testItems)]
+    win1 = curses.newwin(20,35,0,60)
+    win2 = curses.newwin(20,30,0,30)
+    win3 = curses.newwin(5,40,30,0)
+    navigation = [(win,netList),(win2,testItems)]
     #loop
     while True: 
         #Draw order
-        win3.clear()
         win1.clear()
-        win1.addstr(1,1,str(len(itemsN)))
+        #win1.addstr(1,1,str(len(netList)))
         win1.addstr(2,1,str(current_row_idx))
         win1.addstr(3,1,str(current_col_idx))
-        info ="height,width:"+str((height,width))
-        win1.addstr(4,1,info)
-        winFrame(win1,20,50)
+        infoTemp ="height,width:"+str((height,width))
+        win1.addstr(4,1,infoTemp)
+        statusTemp = ("Wifi on:"+str(wifiState))
+        win1.addstr(5,1,statusTemp)
+        try:
+            win1.addstr(6,1,chr(key)+str(key))
+        except:
+            win1.addstr(6,1,"")
+        win1.addstr(7,1,str(interactiveMode))
+        win1.addstr(8,1,enterText)
+        winFrame(win1,20,35)
         win1.refresh()
         
-        menuList(current_row_idx,current_col_idx,0,navigation,True)
-        menuList(current_row_idx,current_col_idx,1,navigation,True)
         winFrame(win,winyx[0],winyx[1])
         winFrame(win2,20,30)
-        win2.refresh()
+        menuList(current_row_idx,current_col_idx,0,navigation,True)#win
+        menuList(current_row_idx,current_col_idx,1,navigation,True)#win2
         
-        win3.addstr(1,0,command)
+        win3.clear()
+        win3.addstr(1,0,str(command))
         win3.refresh()
-        #Keymanaging
+        
+        #Keymanaging/Update states etc
         key = win.getch()#in ASCII code  
         keymanagerQuit(key)
-        current_row_idx = keymanagerList(key,current_col_idx,current_row_idx,navigation)
-        current_col_idx,current_row_idx = keymanagerTab(key,current_col_idx,current_row_idx,navigation)
-        command = keymanagerSelect(key,current_col_idx,current_row_idx,navigation)
+        if(interactiveMode):
+            current_row_idx = keymanagerList(key,current_col_idx,current_row_idx,navigation)
+            current_col_idx,current_row_idx = keymanagerTab(key,current_col_idx,current_row_idx,navigation)
+            command = keymanagerSelect(key,current_col_idx,current_row_idx,navigation)
+            wifiState = keymanagerStatus(key,wifiState)
+            netList = keymanagerRefresh(key,netList)
+            if key == ord("i"):
+                interactiveMode = False
+        #enter text mode
+        else:
+            #press ESC to leave text mode
+            if key == 27:
+                enterText = ""
+                interactiveMode = True
+            elif key == 127:
+                enterText = enterText[:-1]
+            elif key == 0:
+                pass
+                #connect(saveCommand,enterText)
+            else:
+                enterText = enterText + chr(key)
+        #Press enter in menuList containing List of network names
+        if type(command)!='bool' and navigation[current_col_idx][1] == netList:
+            #saveCommand = command
+            #interactiveMode = True
+            pass
+        else:
+            pass
         #Clear
         stdscr.clear()
 
