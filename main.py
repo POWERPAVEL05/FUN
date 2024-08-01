@@ -1,6 +1,6 @@
 import curses
 from keymanagers import timeToQuit,keymanagerQuit,keymanagerList,keymanagerTab,keymanagerSelect,keymanagerStatus,keymanagerRefresh
-from netTools import getSSID
+from netTools import getSSID,connect
 stdscr = curses.initscr()
 #41,147
 
@@ -90,12 +90,13 @@ def main(stdscr):
     win = curses.newwin(20,30,0,0)#height,width,y,x 
     win1 = curses.newwin(20,35,0,60)
     win2 = curses.newwin(20,30,0,30)
-    win3 = curses.newwin(5,40,30,0)
+    win3 = curses.newwin(5,45,30,0)
     navigation = [(win,netList),(win2,testItems)]
     #loop
     while True: 
         #Draw order
         win1.clear()
+        #add stuff to win1
         #win1.addstr(1,1,str(len(netList)))
         win1.addstr(2,1,str(current_row_idx))
         win1.addstr(3,1,str(current_col_idx))
@@ -119,6 +120,7 @@ def main(stdscr):
         
         win3.clear()
         win3.addstr(1,0,str(command))
+        win3.addstr(2,0,str(saveCommand)+" Password: "+str(enterText))
         win3.refresh()
         
         #Keymanaging/Update states etc
@@ -137,19 +139,31 @@ def main(stdscr):
             #press ESC to leave text mode
             if key == 27:
                 enterText = ""
+                command = False
                 interactiveMode = True
+            #backspace
             elif key == 127:
                 enterText = enterText[:-1]
-            elif key == 0:
-                pass
-                #connect(saveCommand,enterText)
+            #enter to connect
+            elif key == ord("\n"):
+                interactiveMode = True
+                command = "loading"
+                win3.refresh()
+                connect(str(saveCommand),str(enterText))
+                command = False
+                enterText = "done"
+                saveCommand = ""
             else:
-                enterText = enterText + chr(key)
+                #set limit
+                if len(enterText)<=30:
+                    enterText = enterText + chr(key)
+                else:
+                    pass
         #Press enter in menuList containing List of network names
-        if type(command)!='bool' and navigation[current_col_idx][1] == netList:
-            #saveCommand = command
-            #interactiveMode = True
-            pass
+        if command!=False and navigation[current_col_idx][1] == netList:
+            saveCommand = command
+            command = False
+            interactiveMode = False
         else:
             pass
         #Clear

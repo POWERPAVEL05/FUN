@@ -18,7 +18,10 @@ def getSSID(breakpoint = None,duplicateRemove=False)-> list:
         return nameList[:breakpoint]
 
 def connect(name,password):
-    subprocess.run(["nmcli","d","w","connect",str(name),"password",str(password)])
+    if password == "":
+        subprocess.run(["nmcli","d","w","connect",str(name)])
+    else:
+        subprocess.run(["nmcli","d","w","connect",str(name),"password",str(password)])
 
 def wifiOff():
     subprocess.run(["nmcli","radio","wifi","off"])
