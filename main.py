@@ -1,6 +1,7 @@
 import curses
 from keymanagers import timeToQuit,keymanagerQuit,keymanagerList,keymanagerTab,keymanagerSelect,keymanagerStatus,keymanagerRefresh
 from netTools import getSSID,connect
+import time
 stdscr = curses.initscr()
 #41,147
 
@@ -81,9 +82,17 @@ def main(stdscr):
     
     #splash screen
     height, width = stdscr.getmaxyx()
+    winLogo = curses.newwin(30,40,int((height/2)-4),int((width/2)-13))
+    winLogo.addstr(0,0,logo())
+    winLogo.refresh()
     stdscr.addstr(0,0,"FUN - is fetching data")
     stdscr.refresh()
+    #time.sleep(5)
     netList = getSSID(18,True)
+    stdscr.clear()
+    stdscr.refresh()
+    winLogo.clear()
+    winLogo.refresh()
 
     #init Windows
     winyx = (20,30)
@@ -179,7 +188,26 @@ def setColor(pairName,text,y,x,win=stdscr):
 #TODO: finish
 def updateAll():
     pass
-
+def logo():
+    logoFun = (
+   r"    ____                    "
+    "\n"
+   r"   / __/                    " 
+    "\n"
+   r"  /\ \/_                    "
+    "\n"
+   r" /\_\ \_\  _    _   ___     " 
+    "\n"
+   r" \/_/\ \//\ \ /\ \ / _ `\   " 
+    "\n"
+   r"    \ \ \\ \ \\_\ \\ \/\ \  "
+    "\n"
+   r"     \ \_\\ \_____/ \_\ \_\ "
+    "\n"
+   r"      \/_/ \/____/ \/_/\/_/ "
+    "\n"
+    )
+    return logoFun
 #run main() in wrapper
 if __name__ == "__main__":
     try:
