@@ -82,17 +82,14 @@ def main(stdscr):
     
     #splash screen
     height, width = stdscr.getmaxyx()
-    winLogo = curses.newwin(30,40,int((height/2)-4),int((width/2)-13))
-    winLogo.addstr(0,0,logo())
-    winLogo.refresh()
+    #winLogo = curses.newwin(30,40,int((height/2)-4),int((width/2)-13))
     stdscr.addstr(0,0,"FUN - is fetching data")
+    logoWin(stdscr,int((height/2)-4),int((width/2)-13))
     stdscr.refresh()
     #time.sleep(5)
     netList = getSSID(18,True)
     stdscr.clear()
     stdscr.refresh()
-    winLogo.clear()
-    winLogo.refresh()
 
     #init Windows
     winyx = (20,30)
@@ -188,26 +185,21 @@ def setColor(pairName,text,y,x,win=stdscr):
 #TODO: finish
 def updateAll():
     pass
-def logo():
-    logoFun = (
-   r"    ____                    "
-    "\n"
-   r"   / __/                    " 
-    "\n"
-   r"  /\ \/_                    "
-    "\n"
-   r" /\_\ \_\  _    _   ___     " 
-    "\n"
-   r" \/_/\ \//\ \ /\ \ / _ `\   " 
-    "\n"
-   r"    \ \ \\ \ \\_\ \\ \/\ \  "
-    "\n"
-   r"     \ \_\\ \_____/ \_\ \_\ "
-    "\n"
-   r"      \/_/ \/____/ \/_/\/_/ "
-    "\n"
-    )
-    return logoFun
+
+#draw logo in Window
+def logoWin(win,y,x):
+    logoFun =[
+   r"    ____                    ",
+   r"   / __/                    ",
+   r"  /\ \/_                    ",
+   r" /\_\ \_\  _    _   ___     ",
+   r" \/_/\ \//\ \ /\ \ / _ `\   ", 
+   r"    \ \ \\ \ \\_\ \\ \/\ \  ",
+   r"     \ \_\\ \_____/ \_\ \_\ ",
+   r"      \/_/ \/____/ \/_/\/_/ ",
+    ]
+    for idx,item in enumerate(logoFun):
+        win.addstr(y+idx,x,item)
 #run main() in wrapper
 if __name__ == "__main__":
     try:
